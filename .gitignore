@@ -1,2 +1,8 @@
-node_modules
-node_modules
+#dependencies
+backend/config/.env
+frontend/node_nodules
+backend/node_nodules
+socket/node_nodules
+
+
+npm-debug. log*
