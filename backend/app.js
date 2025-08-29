@@ -4,6 +4,7 @@ const ErrorHandler = require("./middleware/error");
 const app = express();
 const bodyParser = require("body-parser");
 const cors = require("cors");
+const path = require("path")
 
 app.use(express.json());
 app.use(cookieParser());
@@ -13,8 +14,8 @@ app.use(
     credentials: true,
   })
 );
-app.use("/", express.static("uploads"));
-app.use("/", (req, res) => {
+app.use("/", express.static(path.join(__dirname,"./uploads")));
+app.use("/test", (req, res) => {
   res.send("hello world");
 });
 
