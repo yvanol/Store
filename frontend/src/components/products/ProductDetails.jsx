@@ -127,10 +127,11 @@ const ProductDetails = ({ data }) => {
             <div className="block w-full 800px:flex">
               <div className="w-full 800px:w-[50%] mr-4">
                 <img
-                  src={data.images?.[0] || "/default-product.png"}
+                  src={data.images?.[select] || "/default-product.png"}
                   alt={data.name}
                   className="w-[78%]"
                 />
+
                 <div className="w-full flex">
                   {data &&
                     data.images.map((i, index) => (
