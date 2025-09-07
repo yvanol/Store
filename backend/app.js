@@ -2,9 +2,9 @@ const cookieParser = require("cookie-parser");
 const express = require("express");
 const ErrorHandler = require("./middleware/error");
 const app = express();
-const bodyParser = require("body-parser");
 const cors = require("cors");
 const path = require("path");
+const formidable = require("formidable"); // Add for FormData parsing
 
 app.use(express.json());
 app.use(cookieParser());
@@ -14,21 +14,21 @@ app.use(
     credentials: true,
   })
 );
-app.use("/", express.static(path.join(__dirname, "./uploads")));
+app.use("/", express.static(path.join(__dirname, "./Uploads")));
+
+// Serve test route
 app.use("/test", (req, res) => {
   res.send("hello world");
 });
 
-app.use(bodyParser.urlencoded({ extended: true, limit: "50mb" }));
-
-//config
+// Config
 if (process.env.NODE_ENV !== "PRODUCTION") {
   require("dotenv").config({
     path: "config/.env",
   });
 }
 
-// IMPORTS ROUTE
+// IMPORT ROUTES
 const user = require("./controller/user");
 const shop = require("./controller/shop");
 const product = require("./controller/product");
@@ -51,7 +51,7 @@ app.use("/api/v2/conversation", conversation);
 app.use("/api/v2/message", message);
 app.use("/api/v2/withdraw", withdraw);
 
-// it's for ErrorHandling
+// Error Handling
 app.use(ErrorHandler);
 
 module.exports = app;

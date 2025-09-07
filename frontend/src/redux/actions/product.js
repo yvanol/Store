@@ -1,12 +1,15 @@
 import axios from "axios";
 import { server } from "../../server";
 
-// create product
+// Create product
 export const createProduct = (newForm) => async (dispatch) => {
   try {
-    dispatch({
-      type: "productCreateRequest",
-    });
+    dispatch({ type: "productCreateRequest" });
+
+    // Log FormData for debugging
+    for (let [key, value] of newForm.entries()) {
+      console.log(`FormData ${key}:`, value);
+    }
 
     const config = { headers: { "Content-Type": "multipart/form-data" } };
 
@@ -15,24 +18,24 @@ export const createProduct = (newForm) => async (dispatch) => {
       newForm,
       config
     );
+
     dispatch({
       type: "productCreateSuccess",
       payload: data.product,
     });
   } catch (error) {
+    console.error("Create Product Error:", error.response?.data);
     dispatch({
       type: "productCreateFail",
-      payload: error.response.data.message,
+      payload: error.response?.data?.message || "Failed to create product",
     });
   }
 };
 
-// get All products of shop
+// Get all products of a shop
 export const getAllProductsShop = (id) => async (dispatch) => {
   try {
-    dispatch({
-      type: "getAllProductsShopRequest",
-    });
+    dispatch({ type: "getAllProductsShopRequest" });
 
     const { data } = await axios.get(
       `${server}/product/get-all-products-shop/${id}`
@@ -42,25 +45,22 @@ export const getAllProductsShop = (id) => async (dispatch) => {
       payload: data.products,
     });
   } catch (error) {
+    console.error("Get All Products Shop Error:", error.response?.data);
     dispatch({
       type: "getAllProductsShopFailed",
-      payload: error.response.data.message,
+      payload: error.response?.data?.message || "Failed to fetch shop products",
     });
   }
 };
 
-// delete product of a shop
+// Delete product of a shop
 export const deleteProduct = (id) => async (dispatch) => {
   try {
-    dispatch({
-      type: "deleteProductRequest",
-    });
+    dispatch({ type: "deleteProductRequest" });
 
     const { data } = await axios.delete(
       `${server}/product/delete-shop-product/${id}`,
-      {
-        withCredentials: true,
-      }
+      { withCredentials: true }
     );
 
     dispatch({
@@ -68,35 +68,36 @@ export const deleteProduct = (id) => async (dispatch) => {
       payload: data.message,
     });
   } catch (error) {
+    console.error("Delete Product Error:", error.response?.data);
     dispatch({
       type: "deleteProductFailed",
-      payload: error.data.message,
+      payload: error.response?.data?.message || "Failed to delete product",
     });
   }
 };
 
+// Update product
 export const updateProduct = (productId, updatedForm) => async (dispatch) => {
   try {
-    dispatch({
-      type: "updateProductRequest",
-    });
+    dispatch({ type: "updateProductRequest" });
 
     const formData = new FormData();
     for (const key in updatedForm) {
-      if (key === "images") {
-        for (let i = 0; i < updatedForm.images.length; i++) {
-          formData.append("images", updatedForm.images[i]);
-        }
+      if (key === "images" && updatedForm.images) {
+        Array.from(updatedForm.images).forEach((image) => {
+          formData.append("images", image);
+        });
       } else {
-        formData.append(key, updatedForm[key]);
+        formData.append(key, updatedForm[key] || "");
       }
     }
 
-    const config = {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    };
+    // Log FormData for debugging
+    for (let [key, value] of formData.entries()) {
+      console.log(`Update FormData ${key}:`, value);
+    }
+
+    const config = { headers: { "Content-Type": "multipart/form-data" } };
 
     const { data } = await axios.put(
       `${server}/product/update-product/${productId}`,
@@ -109,18 +110,18 @@ export const updateProduct = (productId, updatedForm) => async (dispatch) => {
       payload: data.product,
     });
   } catch (error) {
+    console.error("Update Product Error:", error.response?.data);
     dispatch({
       type: "updateProductFail",
-      payload: error.response.data.message,
+      payload: error.response?.data?.message || "Failed to update product",
     });
   }
 };
-// get all products
+
+// Get all products
 export const getAllProducts = () => async (dispatch) => {
   try {
-    dispatch({
-      type: "getAllProductsRequest",
-    });
+    dispatch({ type: "getAllProductsRequest" });
 
     const { data } = await axios.get(`${server}/product/get-all-products`);
     dispatch({
@@ -128,9 +129,10 @@ export const getAllProducts = () => async (dispatch) => {
       payload: data.products,
     });
   } catch (error) {
+    console.error("Get All Products Error:", error.response?.data);
     dispatch({
       type: "getAllProductsFailed",
-      payload: error.response.data.message,
+      payload: error.response?.data?.message || "Failed to fetch products",
     });
   }
 };
