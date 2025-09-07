@@ -22,14 +22,16 @@ const sanitizeFilename = (filename) => {
 router.post("/create-user", upload.single("file"), async (req, res, next) => {
   try {
     const { fullName, phoneNumber, email, password } = req.body;
-    const userEmail = await User.findOne({ email });
 
+    // Check if user already exists
+    const userEmail = await User.findOne({ email });
     if (userEmail) {
       return next(new ErrorHandler("User already exists", 400));
     }
 
+    // Validate file upload
     if (!req.file) {
-      return next(new ErrorHandler("No file uploaded", 400));
+      return next(new ErrorHandler("Please upload an avatar", 400));
     }
 
     // Sanitize the filename
@@ -69,7 +71,6 @@ router.post("/create-user", upload.single("file"), async (req, res, next) => {
     return next(new ErrorHandler(error.message, 400));
   }
 });
-
 // Create activation token
 const createActivationToken = (user) => {
   return jwt.sign(user, process.env.ACTIVATION_SECRET, {
