@@ -19,24 +19,32 @@ router.post(
       const shop = await Shop.findById(shopId);
       if (!shop) {
         return next(new ErrorHandler("Shop Id is invalid!", 400));
-      } else {
-        const files = req.files;
-        const imageUrls = files.map((file) => `${file.filename}`);
-
-        const productData = req.body;
-        productData.images = imageUrls;
-        productData.shop = shop;
-
-        const product = await Product.create(productData);
-
-        res.status(201).json({
-          success: true,
-          product,
-        });
       }
-      // console.log(error)
+
+      const files = req.files;
+      const imageUrls = [];
+
+      // Upload each file to Vercel Blob
+      for (const file of files) {
+        const { url } = await put(`uploads/${file.originalname}`, file.buffer, {
+          access: "public", // Or "private" if you need restricted access
+          token: process.env.VERCEL_BLOB_TOKEN, // Set in Vercel env vars
+        });
+        imageUrls.push(url);
+      }
+
+      const productData = req.body;
+      productData.images = imageUrls;
+      productData.shop = shop;
+
+      const product = await Product.create(productData);
+
+      res.status(201).json({
+        success: true,
+        product,
+      });
     } catch (error) {
-      return next(new ErrorHandler(error, 400));
+      return next(new ErrorHandler(error.message, 400));
     }
   })
 );
@@ -65,32 +73,25 @@ router.delete(
   catchAsyncErrors(async (req, res, next) => {
     try {
       const productId = req.params.id;
-
       const productData = await Product.findById(productId);
 
-      productData.images.forEach((imageUrl) => {
-        const filename = imageUrl;
-        const filePath = `uploads/${filename}`;
-
-        fs.unlink(filePath, (err) => {
-          if (err) {
-            console.log(err);
-          }
-        });
-      });
-
-      const product = await Product.findByIdAndDelete(productId);
-
-      if (!product) {
+      if (!productData) {
         return next(new ErrorHandler("Product not found with this id!", 500));
       }
 
+      // Delete images from Vercel Blob
+      for (const imageUrl of productData.images) {
+        await del(imageUrl, { token: process.env.VERCEL_BLOB_TOKEN });
+      }
+
+      const product = await Product.findByIdAndDelete(productId);
+
       res.status(201).json({
         success: true,
-        message: "product Deleted Successfully!",
+        message: "Product Deleted Successfully!",
       });
     } catch (error) {
-      return next(new ErrorHandler(error, 400));
+      return next(new ErrorHandler(error.message, 400));
     }
   })
 );
