@@ -9,6 +9,58 @@ const { put, del } = require("@vercel/blob"); // Import put and del from @vercel
 const ErrorHandler = require("../utils/ErrorHandler");
 const Order = require("../model/order"); // Fixed: Changed 'order' to 'Order' to match usage
 
+const sanitizeFilename = (filename) => {
+  return filename
+    .replace(/[^a-zA-Z0-9.-]/g, '-') // Replace non-alphanumeric characters with hyphens
+    .replace(/\s+/g, '-') // Replace spaces with hyphens
+    .toLowerCase();
+};
+
+
+
+// In your create-product route
+router.post(
+  "/create-product",
+  upload.array("images"),
+  catchAsyncErrors(async (req, res, next) => {
+    try {
+      const shopId = req.body.shopId;
+      const shop = await Shop.findById(shopId);
+      if (!shop) {
+        return next(new ErrorHandler("Shop Id is invalid!", 400));
+      }
+
+      const files = req.files;
+      const imageUrls = [];
+
+      // Upload each file to Vercel Blob with sanitized filename
+      for (const file of files) {
+        const sanitizedName = sanitizeFilename(file.originalname);
+        const { url } = await put(`uploads/${Date.now()}-${sanitizedName}`, file.buffer, {
+          access: "public",
+          token: process.env.BLOB_READ_WRITE_TOKEN,
+        });
+        imageUrls.push(url);
+      }
+
+      const productData = req.body;
+      productData.images = imageUrls;
+      productData.shop = shop;
+
+      const product = await Product.create(productData);
+
+      res.status(201).json({
+        success: true,
+        product,
+      });
+    } catch (error) {
+      return next(new ErrorHandler(error.message, 400));
+    }
+  })
+);
+
+
+
 // Create product
 router.post(
   "/create-product",
