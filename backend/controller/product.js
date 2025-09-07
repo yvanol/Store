@@ -5,11 +5,11 @@ const { upload } = require("../multer");
 const { isSeller, isAuthenticated, isAdmin } = require("../middleware/auth");
 const catchAsyncErrors = require("../middleware/catchAsyncErrors");
 const Shop = require("../model/shop");
-const fs = require("fs");
+const { put, del } = require("@vercel/blob"); // Import put and del from @vercel/blob
 const ErrorHandler = require("../utils/ErrorHandler");
-const order = require("../model/order");
+const Order = require("../model/order"); // Fixed: Changed 'order' to 'Order' to match usage
 
-//create product
+// Create product
 router.post(
   "/create-product",
   upload.array("images"),
@@ -26,9 +26,9 @@ router.post(
 
       // Upload each file to Vercel Blob
       for (const file of files) {
-        const { url } = await put(`uploads/${file.originalname}`, file.buffer, {
+        const { url } = await put(`uploads/${Date.now()}-${file.originalname}`, file.buffer, {
           access: "public", // Or "private" if you need restricted access
-          token: process.env.VERCEL_BLOB_TOKEN, // Set in Vercel env vars
+          token: process.env.BLOB_READ_WRITE_TOKEN, // Use standard Vercel env var name
         });
         imageUrls.push(url);
       }
@@ -49,44 +49,44 @@ router.post(
   })
 );
 
-// get all products of shop
+// Get all products of a shop
 router.get(
   "/get-all-products-shop/:id",
   catchAsyncErrors(async (req, res, next) => {
     try {
       const products = await Product.find({ shopId: req.params.id });
 
-      res.status(201).json({
+      res.status(200).json({
         success: true,
         products,
       });
     } catch (error) {
-      return next(new ErrorHandler(error, 400));
+      return next(new ErrorHandler(error.message, 400));
     }
   })
 );
 
-//delete product of shop
+// Delete product of a shop
 router.delete(
   "/delete-shop-product/:id",
   isSeller,
   catchAsyncErrors(async (req, res, next) => {
     try {
       const productId = req.params.id;
-      const productData = await Product.findById(productId);
+      const product = await Product.findById(productId);
 
-      if (!productData) {
-        return next(new ErrorHandler("Product not found with this id!", 500));
+      if (!product) {
+        return next(new ErrorHandler("Product not found with this id!", 404));
       }
 
       // Delete images from Vercel Blob
-      for (const imageUrl of productData.images) {
-        await del(imageUrl, { token: process.env.VERCEL_BLOB_TOKEN });
+      for (const imageUrl of product.images) {
+        await del(imageUrl, { token: process.env.BLOB_READ_WRITE_TOKEN });
       }
 
-      const product = await Product.findByIdAndDelete(productId);
+      await Product.findByIdAndDelete(productId);
 
-      res.status(201).json({
+      res.status(200).json({
         success: true,
         message: "Product Deleted Successfully!",
       });
@@ -96,24 +96,24 @@ router.delete(
   })
 );
 
-// get all products
+// Get all products
 router.get(
   "/get-all-products",
   catchAsyncErrors(async (req, res, next) => {
     try {
       const products = await Product.find().sort({ createdAt: -1 });
 
-      res.status(201).json({
+      res.status(200).json({
         success: true,
         products,
       });
     } catch (error) {
-      return next(new ErrorHandler(error, 400));
+      return next(new ErrorHandler(error.message, 400));
     }
   })
 );
 
-// create new review
+// Create or update product review
 router.put(
   "/create-new-review",
   isAuthenticated,
@@ -122,6 +122,9 @@ router.put(
       const { user, rating, comment, productId, orderId } = req.body;
 
       const product = await Product.findById(productId);
+      if (!product) {
+        return next(new ErrorHandler("Product not found!", 404));
+      }
 
       const review = {
         user,
@@ -131,30 +134,30 @@ router.put(
       };
 
       const isReviewed = product.reviews.find(
-        (rev) => rev.user._id === req.user._id
+        (rev) => rev.user._id.toString() === req.user._id.toString()
       );
 
       if (isReviewed) {
         product.reviews.forEach((rev) => {
-          if (rev.user._id === req.user._id) {
-            (rev.rating = rating), (rev.comment = comment), (rev.user = user);
+          if (rev.user._id.toString() === req.user._id.toString()) {
+            rev.rating = rating;
+            rev.comment = comment;
+            rev.user = user;
           }
         });
       } else {
         product.reviews.push(review);
       }
 
-      let avg = 0;
-
-      product.reviews.forEach((rev) => {
-        avg += rev.rating;
-      });
-
-      product.ratings = avg / product.reviews.length;
+      // Calculate average rating
+      product.ratings =
+        product.reviews.reduce((sum, rev) => sum + rev.rating, 0) /
+        product.reviews.length;
 
       await product.save({ validateBeforeSave: false });
 
-      await order.findByIdAndUpdate(
+      // Update order's isReviewed status
+      await Order.findByIdAndUpdate(
         orderId,
         { $set: { "cart.$[elem].isReviewed": true } },
         { arrayFilters: [{ "elem._id": productId }], new: true }
@@ -162,25 +165,24 @@ router.put(
 
       res.status(200).json({
         success: true,
-        message: "Reviewed succesfully!",
+        message: "Reviewed successfully!",
       });
     } catch (error) {
-      return next(new ErrorHandler(error, 400));
+      return next(new ErrorHandler(error.message, 400));
     }
   })
 );
 
-// all products --- for admin
+// Get all products for admin
 router.get(
   "/admin-all-products",
   isAuthenticated,
   isAdmin("Admin"),
   catchAsyncErrors(async (req, res, next) => {
     try {
-      const products = await Product.find().sort({
-        createdAt: -1,
-      });
-      res.status(201).json({
+      const products = await Product.find().sort({ createdAt: -1 });
+
+      res.status(200).json({
         success: true,
         products,
       });
