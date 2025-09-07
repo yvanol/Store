@@ -135,16 +135,15 @@ const ProductDetails = ({ data }) => {
                   {data &&
                     data.images.map((i, index) => (
                       <div
-                        className={`${select === 0 ? "border" : "null"
-                          } cursor-pointer`}
+                        key={index}
+                        className={`cursor-pointer mr-3 mt-3 ${select === index ? "border-2 border-blue-500" : ""}`}
+                        onClick={() => setSelect(index)}
                       >
                         <img
                           src={i}
-                          alt=""
-                          className="h-[100px] overflow-hidden mr-3 mt-3"
-                          onClick={() => setSelect(index)}
+                          alt={`Product image ${index + 1}`}
+                          className="h-[100px] w-[100px] object-cover"
                         />
-
                       </div>
                     ))}
                   <div
