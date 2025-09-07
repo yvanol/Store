@@ -127,17 +127,16 @@ const ProductDetails = ({ data }) => {
             <div className="block w-full 800px:flex">
               <div className="w-full 800px:w-[50%] mr-4">
                 <img
-                  src={`${backend_url}${data && data.images[select]}`}
-                  alt=""
+                  src={data.images?.[0] || "/default-product.png"}
+                  alt={data.name}
                   className="w-[78%]"
                 />
                 <div className="w-full flex">
                   {data &&
                     data.images.map((i, index) => (
                       <div
-                        className={`${
-                          select === 0 ? "border" : "null"
-                        } cursor-pointer`}
+                        className={`${select === 0 ? "border" : "null"
+                          } cursor-pointer`}
                       >
                         <img
                           src={`${backend_url}${i}`}
@@ -148,9 +147,8 @@ const ProductDetails = ({ data }) => {
                       </div>
                     ))}
                   <div
-                    className={`${
-                      select === 1 ? "border" : "null"
-                    } cursor-pointer`}
+                    className={`${select === 1 ? "border" : "null"
+                      } cursor-pointer`}
                   ></div>
                 </div>
               </div>
@@ -214,9 +212,8 @@ const ProductDetails = ({ data }) => {
                 </div>
                 <div className="flex items-center pt-8">
                   <img
-                    src={`${backend_url}${
-                      data?.shop?.avatar || "/default-logo.png"
-                    }`}
+                    src={`${backend_url}${data?.shop?.avatar || "/default-logo.png"
+                      }`}
                     alt=""
                     className="w-[50px] h-[50px] rounded-full mr-2"
                   />
@@ -352,16 +349,15 @@ const ProductDetailsinfo = ({
           <div className="w-full 800px:w-[50%]">
             <div className="flex items-center">
 
-               <Link to={`/shop/preview/${data?.shop?._id}`}>
+              <Link to={`/shop/preview/${data?.shop?._id}`}>
                 <img
-                src={`${backend_url}${
-                  data?.shop?.avatar || "/default-logo.png"
-                }`} // Use data.shop.avatar instead of seller.avatar
-                className="w-[50px] h-[50px] rounded-full"
-                alt=""
-              />
-               </Link>
-              
+                  src={`${backend_url}${data?.shop?.avatar || "/default-logo.png"
+                    }`} // Use data.shop.avatar instead of seller.avatar
+                  className="w-[50px] h-[50px] rounded-full"
+                  alt=""
+                />
+              </Link>
+
               <div>
                 <div className="pl-3">
                   <h3 className={`${styles.shop_name}`}>{data.shop.name}</h3>
@@ -392,15 +388,15 @@ const ProductDetailsinfo = ({
                 Total Review:
                 <span className="font-[500]">{totalReviewsLength}</span>
               </h5>
-             {data?.shop?._id && (
-          <Link to={`/shop/preview/${data?.shop?._id}`}>
-            <div
-              className={`${styles.button} !rounded-[4px] !h-[39.5px] mt-3`}
-            >
-              <h4 className="text-white">Visit Shop</h4>
-            </div>
-          </Link>
-        )}
+              {data?.shop?._id && (
+                <Link to={`/shop/preview/${data?.shop?._id}`}>
+                  <div
+                    className={`${styles.button} !rounded-[4px] !h-[39.5px] mt-3`}
+                  >
+                    <h4 className="text-white">Visit Shop</h4>
+                  </div>
+                </Link>
+              )}
             </div>
           </div>
         </div>
