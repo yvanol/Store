@@ -139,11 +139,12 @@ const ProductDetails = ({ data }) => {
                           } cursor-pointer`}
                       >
                         <img
-                          src={`${backend_url}${i}`}
+                          src={i}
                           alt=""
                           className="h-[100px] overflow-hidden mr-3 mt-3"
                           onClick={() => setSelect(index)}
                         />
+
                       </div>
                     ))}
                   <div
