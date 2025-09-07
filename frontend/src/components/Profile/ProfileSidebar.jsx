@@ -15,31 +15,21 @@ import { server } from "../../server";
 import axios from "axios";
 import { toast } from "react-toastify";
 import { useSelector, useDispatch } from "react-redux";
-import { logoutUser } from "../../redux/actions/user"; // Assuming you have a logout action
+import { logoutUser } from "../../redux/actions/user";
 
 const ProfileSidebar = ({ setActive, active }) => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { user } = useSelector((state) => state.user);
+  const { user, isAuthenticated } = useSelector((state) => state.user);
 
   const logoutHandler = async () => {
     try {
-      // Send logout request to clear the token cookie
-      const res = await axios.get(`${server}/user/logout`, {
-        withCredentials: true,
-      });
-
-      // Clear Redux user state
-      dispatch(logoutUser());
-
-      // Show success message
-      toast.success(res.data.message);
-
-      // Navigate to login page
+      await dispatch(logoutUser());
+      toast.success("Logged out successfully!");
       navigate("/login");
     } catch (error) {
-      console.error("Logout error:", error.response?.data?.message || error.message);
-      toast.error(error.response?.data?.message || "Logout failed");
+      console.error("Logout error:", error);
+      toast.error(error.payload || "Logout failed");
     }
   };
 

@@ -161,3 +161,18 @@ export const getAllUsers = () => async (dispatch) => {
     });
   }
 };
+
+// Logout user
+export const logoutUser = () => async (dispatch) => {
+  try {
+    await axios.get(`${server}/user/logout`, { withCredentials: true });
+    dispatch({
+      type: "LogoutUserSuccess",
+    });
+  } catch (error) {
+    dispatch({
+      type: "LogoutUserFail",
+      payload: error.response?.data?.message || "Logout failed",
+    });
+  }
+};
